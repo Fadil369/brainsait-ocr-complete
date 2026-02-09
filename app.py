@@ -1,7 +1,7 @@
 """
-BrainSAIT OCR Complete - Production-Ready Streamlit App
-Best practice implementation with Tesseract OCR
-100% Free deployment on Streamlit Community Cloud
+BrainSAIT OCR Complete - Premium Dark Edition
+AI-Powered OCR with Advanced Table Extraction
+Futuristic Design | Enterprise Features | Excel Export
 """
 
 import streamlit as st
@@ -16,113 +16,495 @@ import re
 from pathlib import Path
 import hashlib
 import sqlite3
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Tuple
 import base64
+import numpy as np
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.utils.dataframe import dataframe_to_rows
 
-# Page configuration - MUST be first Streamlit command
+# Page configuration
 st.set_page_config(
-    page_title="BrainSAIT OCR - برين سايت للتعرف الضوئي",
-    page_icon="🔍",
+    page_title="BrainSAIT OCR • Premium AI Platform",
+    page_icon="⚡",
     layout="wide",
-    initial_sidebar_state="expanded",
-    menu_items={
-        'Get Help': 'https://github.com/Fadil369/brainsait-ocr',
-        'Report a bug': 'https://github.com/Fadil369/brainsait-ocr/issues',
-        'About': "# BrainSAIT OCR\nProfessional document processing with OCR"
-    }
+    initial_sidebar_state="expanded"
 )
 
-# Custom CSS for professional look
+# Premium Dark Theme CSS
 st.markdown("""
 <style>
-    .main-header {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: #1E88E5;
-        text-align: center;
-        margin-bottom: 0.5rem;
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    * {
+        font-family: 'Inter', sans-serif;
     }
-    .sub-header {
-        font-size: 1.2rem;
-        color: #666;
+    
+    /* Dark Background */
+    .stApp {
+        background: linear-gradient(135deg, #0a0e27 0%, #1a1d35 100%);
+    }
+    
+    /* Premium Header */
+    .premium-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 2.5rem;
+        border-radius: 20px;
         text-align: center;
         margin-bottom: 2rem;
+        box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
+        position: relative;
+        overflow: hidden;
     }
-    .feature-box {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 1.5rem;
-        border-radius: 10px;
+    
+    .premium-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: pulse 4s infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 0.5; }
+        50% { transform: scale(1.1); opacity: 0.8; }
+    }
+    
+    .premium-title {
+        font-size: 3rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin: 0;
+        text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        position: relative;
+        z-index: 1;
+    }
+    
+    .premium-subtitle {
+        font-size: 1.2rem;
+        color: rgba(255,255,255,0.9);
+        margin-top: 0.5rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .premium-badge {
+        display: inline-block;
+        background: rgba(255,255,255,0.2);
+        padding: 0.5rem 1.5rem;
+        border-radius: 50px;
         color: white;
-        margin: 1rem 0;
+        font-weight: 600;
+        margin-top: 1rem;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.3);
+        position: relative;
+        z-index: 1;
     }
-    .stat-card {
-        background: #f8f9fa;
-        padding: 1rem;
+    
+    /* Cards */
+    .premium-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 2rem;
+        margin: 1rem 0;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .premium-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 48px rgba(102, 126, 234, 0.4);
+        border-color: rgba(102, 126, 234, 0.5);
+    }
+    
+    /* Metrics */
+    .metric-card {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        border: 1px solid rgba(102, 126, 234, 0.3);
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .metric-card:hover {
+        transform: scale(1.05);
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+    }
+    
+    .metric-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+    }
+    
+    .metric-label {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.7);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-top: 0.5rem;
+    }
+    
+    /* Buttons */
+    .stButton>button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    .stButton>button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 25px rgba(102, 126, 234, 0.6);
+    }
+    
+    /* File Uploader */
+    .uploadedFile {
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px dashed rgba(102, 126, 234, 0.5);
+        border-radius: 12px;
+        padding: 2rem;
+        transition: all 0.3s ease;
+    }
+    
+    .uploadedFile:hover {
+        border-color: rgba(102, 126, 234, 0.8);
+        background: rgba(102, 126, 234, 0.1);
+    }
+    
+    /* Tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 0.5rem;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        background: transparent;
         border-radius: 8px;
-        border-left: 4px solid #1E88E5;
+        color: rgba(255, 255, 255, 0.7);
+        font-weight: 600;
+        transition: all 0.3s ease;
     }
+    
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    /* Progress Bar */
+    .stProgress > div > div > div > div {
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    /* Success/Info/Warning */
     .success-box {
-        background: #d4edda;
-        border: 1px solid #c3e6cb;
-        border-radius: 5px;
+        background: rgba(16, 185, 129, 0.1);
+        border-left: 4px solid #10b981;
+        border-radius: 8px;
         padding: 1rem;
         margin: 1rem 0;
+        color: #10b981;
     }
-    .stDownloadButton button {
+    
+    .info-box {
+        background: rgba(59, 130, 246, 0.1);
+        border-left: 4px solid #3b82f6;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+        color: #3b82f6;
+    }
+    
+    .warning-box {
+        background: rgba(245, 158, 11, 0.1);
+        border-left: 4px solid #f59e0b;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+        color: #f59e0b;
+    }
+    
+    /* Sidebar */
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, rgba(10, 14, 39, 0.95) 0%, rgba(26, 29, 53, 0.95) 100%);
+        backdrop-filter: blur(20px);
+        border-right: 1px solid rgba(102, 126, 234, 0.2);
+    }
+    
+    [data-testid="stSidebar"] .block-container {
+        padding-top: 2rem;
+    }
+    
+    /* DataFrames */
+    .dataframe {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .dataframe thead tr th {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-weight: 600;
+        padding: 1rem;
+    }
+    
+    .dataframe tbody tr:nth-child(even) {
+        background: rgba(255, 255, 255, 0.02);
+    }
+    
+    .dataframe tbody tr:hover {
+        background: rgba(102, 126, 234, 0.1);
+    }
+    
+    /* Text Areas */
+    .stTextArea textarea {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        color: white;
+    }
+    
+    /* Download Buttons */
+    .stDownloadButton>button {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         width: 100%;
+    }
+    
+    /* Footer */
+    .premium-footer {
+        background: rgba(255, 255, 255, 0.05);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 2rem;
+        margin-top: 3rem;
+        border-radius: 16px;
+        text-align: center;
+    }
+    
+    /* Glow Effect */
+    .glow {
+        animation: glow 2s ease-in-out infinite;
+    }
+    
+    @keyframes glow {
+        0%, 100% { filter: drop-shadow(0 0 5px rgba(102, 126, 234, 0.5)); }
+        50% { filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.8)); }
+    }
+    
+    /* Loading Spinner */
+    .stSpinner > div {
+        border-top-color: #667eea;
+    }
+    
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 5px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Database initialization
-@st.cache_resource
-def init_database():
-    """Initialize SQLite database for history tracking"""
-    conn = sqlite3.connect('ocr_history.db', check_same_thread=False)
-    cursor = conn.cursor()
-    
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS ocr_results (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            filename TEXT NOT NULL,
-            file_hash TEXT UNIQUE,
-            upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            file_size INTEGER,
-            page_count INTEGER,
-            language TEXT,
-            character_count INTEGER,
-            word_count INTEGER,
-            processing_time REAL,
-            success BOOLEAN DEFAULT 1
-        )
-    ''')
-    
-    conn.commit()
-    return conn
-
 # Initialize session state
 if 'processing_history' not in st.session_state:
     st.session_state.processing_history = []
-
 if 'current_results' not in st.session_state:
     st.session_state.current_results = None
 
+class AdvancedTableDetector:
+    """AI-Powered Table Detection and Extraction"""
+    
+    @staticmethod
+    def detect_table_structure(text: str) -> List[Dict]:
+        """Advanced table detection with AI-powered analysis"""
+        tables = []
+        lines = text.split('\n')
+        
+        current_table = []
+        table_active = False
+        min_columns = 2
+        
+        for i, line in enumerate(lines):
+            line = line.strip()
+            if not line:
+                if table_active and len(current_table) >= 2:
+                    tables.append(AdvancedTableDetector._process_table(current_table))
+                table_active = False
+                current_table = []
+                continue
+            
+            # Detect columns by multiple separators
+            cells = re.split(r'\s{2,}|\t|\|', line)
+            cells = [c.strip() for c in cells if c.strip()]
+            
+            if len(cells) >= min_columns:
+                if not table_active:
+                    table_active = True
+                current_table.append(cells)
+            else:
+                if table_active and len(current_table) >= 2:
+                    tables.append(AdvancedTableDetector._process_table(current_table))
+                table_active = False
+                current_table = []
+        
+        # Add last table if exists
+        if table_active and len(current_table) >= 2:
+            tables.append(AdvancedTableDetector._process_table(current_table))
+        
+        return tables
+    
+    @staticmethod
+    def _process_table(raw_table: List[List[str]]) -> Dict:
+        """Process raw table data into structured format"""
+        # Find max columns
+        max_cols = max(len(row) for row in raw_table)
+        
+        # Normalize all rows to same column count
+        normalized_table = []
+        for row in raw_table:
+            if len(row) < max_cols:
+                row.extend([''] * (max_cols - len(row)))
+            normalized_table.append(row[:max_cols])
+        
+        # Detect if first row is header (contains non-numeric values)
+        has_header = False
+        if normalized_table:
+            first_row = normalized_table[0]
+            numeric_count = sum(1 for cell in first_row if re.match(r'^[\d\.,]+$', cell))
+            has_header = numeric_count < len(first_row) / 2
+        
+        return {
+            'rows': len(normalized_table),
+            'columns': max_cols,
+            'has_header': has_header,
+            'header': normalized_table[0] if has_header else [f'Column {i+1}' for i in range(max_cols)],
+            'data': normalized_table[1:] if has_header else normalized_table,
+            'full_data': normalized_table
+        }
+    
+    @staticmethod
+    def export_to_excel(tables: List[Dict], filename: str) -> bytes:
+        """Export tables to professionally formatted Excel file"""
+        wb = Workbook()
+        wb.remove(wb.active)  # Remove default sheet
+        
+        # Styling
+        header_font = Font(name='Arial', size=11, bold=True, color='FFFFFF')
+        header_fill = PatternFill(start_color='667EEA', end_color='764BA2', fill_type='solid')
+        header_alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+        
+        cell_font = Font(name='Arial', size=10)
+        cell_alignment = Alignment(horizontal='left', vertical='center', wrap_text=True)
+        
+        border_style = Border(
+            left=Side(style='thin', color='CCCCCC'),
+            right=Side(style='thin', color='CCCCCC'),
+            top=Side(style='thin', color='CCCCCC'),
+            bottom=Side(style='thin', color='CCCCCC')
+        )
+        
+        for idx, table in enumerate(tables, 1):
+            ws = wb.create_sheet(title=f'Table {idx}')
+            
+            # Write header
+            for col_idx, header in enumerate(table['header'], 1):
+                cell = ws.cell(row=1, column=col_idx, value=header)
+                cell.font = header_font
+                cell.fill = header_fill
+                cell.alignment = header_alignment
+                cell.border = border_style
+            
+            # Write data
+            for row_idx, row_data in enumerate(table['data'], 2):
+                for col_idx, cell_value in enumerate(row_data, 1):
+                    cell = ws.cell(row=row_idx, column=col_idx, value=cell_value)
+                    cell.font = cell_font
+                    cell.alignment = cell_alignment
+                    cell.border = border_style
+                    
+                    # Auto-detect numeric values
+                    if re.match(r'^[\d\.,]+$', str(cell_value)):
+                        try:
+                            cell.value = float(cell_value.replace(',', ''))
+                            cell.number_format = '#,##0.00'
+                        except:
+                            pass
+            
+            # Auto-adjust column widths
+            for column in ws.columns:
+                max_length = 0
+                column_letter = column[0].column_letter
+                for cell in column:
+                    try:
+                        if len(str(cell.value)) > max_length:
+                            max_length = len(str(cell.value))
+                    except:
+                        pass
+                adjusted_width = min(max_length + 2, 50)
+                ws.column_dimensions[column_letter].width = adjusted_width
+            
+            # Freeze header row
+            ws.freeze_panes = 'A2'
+        
+        # Save to bytes
+        output = io.BytesIO()
+        wb.save(output)
+        output.seek(0)
+        return output.getvalue()
+
 class OCRProcessor:
-    """Professional OCR processing engine"""
+    """Enhanced OCR processing engine"""
     
     def __init__(self):
         self.supported_formats = ['pdf', 'png', 'jpg', 'jpeg', 'webp', 'bmp', 'tiff']
+        self.table_detector = AdvancedTableDetector()
     
     def calculate_file_hash(self, file_bytes: bytes) -> str:
-        """Calculate SHA256 hash of file"""
         return hashlib.sha256(file_bytes).hexdigest()
     
     def extract_text_from_image(self, image: Image.Image, lang: str = 'eng+ara') -> str:
-        """Extract text from image using Tesseract OCR"""
         try:
-            # Enhance image quality for better OCR
-            image = image.convert('L')  # Convert to grayscale
-            text = pytesseract.image_to_string(image, lang=lang, config='--psm 3')
+            # Enhanced preprocessing for better OCR
+            image = image.convert('L')  # Grayscale
+            # Enhance contrast
+            image_array = np.array(image)
+            image_array = np.clip(image_array * 1.2, 0, 255).astype(np.uint8)
+            image = Image.fromarray(image_array)
+            
+            text = pytesseract.image_to_string(
+                image, 
+                lang=lang,
+                config='--psm 3 --oem 3'  # Best mode for documents
+            )
             return text
         except Exception as e:
             st.error(f"OCR Error: {str(e)}")
@@ -130,7 +512,6 @@ class OCRProcessor:
     
     def extract_from_pdf(self, pdf_bytes: bytes, lang: str = 'eng+ara', 
                         use_ocr: bool = True, progress_callback=None) -> Dict:
-        """Extract text from PDF with optional OCR"""
         results = {
             'pages': [],
             'total_text': '',
@@ -149,25 +530,23 @@ class OCRProcessor:
                     progress_callback(page_num + 1, pdf.page_count)
                 
                 page = pdf[page_num]
-                
-                # Try standard text extraction first
                 text = page.get_text()
                 
-                # Use OCR if text is minimal and OCR is enabled
                 if use_ocr and len(text.strip()) < 50:
-                    pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
+                    pix = page.get_pixmap(matrix=fitz.Matrix(2.5, 2.5))  # Higher quality
                     img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
                     text = self.extract_text_from_image(img, lang)
                 
-                # Detect tables
-                tables = self.detect_tables(text)
+                # Advanced table detection
+                tables = self.table_detector.detect_table_structure(text)
                 
                 page_data = {
                     'page_number': page_num + 1,
                     'text': text,
                     'char_count': len(text),
                     'word_count': len(text.split()),
-                    'tables': tables
+                    'tables': tables,
+                    'table_count': len(tables)
                 }
                 
                 results['pages'].append(page_data)
@@ -180,178 +559,90 @@ class OCRProcessor:
             st.error(f"PDF Processing Error: {str(e)}")
         
         return results
-    
-    def detect_tables(self, text: str) -> List[Dict]:
-        """Detect table structures in text"""
-        tables = []
-        lines = text.split('\n')
-        
-        current_table = []
-        in_table = False
-        
-        for line in lines:
-            # Detect table rows (2+ columns separated by whitespace or tabs)
-            parts = re.split(r'\s{2,}|\t', line.strip())
-            
-            if len(parts) >= 2:
-                if not in_table:
-                    in_table = True
-                    current_table = []
-                current_table.append(parts)
-            else:
-                if in_table and len(current_table) >= 2:
-                    tables.append({
-                        'rows': len(current_table),
-                        'columns': max(len(row) for row in current_table),
-                        'data': current_table
-                    })
-                in_table = False
-                current_table = []
-        
-        # Add last table if exists
-        if in_table and len(current_table) >= 2:
-            tables.append({
-                'rows': len(current_table),
-                'columns': max(len(row) for row in current_table),
-                'data': current_table
-            })
-        
-        return tables
-    
-    def extract_from_image(self, image_bytes: bytes, lang: str = 'eng+ara') -> Dict:
-        """Extract text from image"""
-        results = {
-            'text': '',
-            'char_count': 0,
-            'word_count': 0,
-            'tables': []
-        }
-        
-        try:
-            img = Image.open(io.BytesIO(image_bytes))
-            text = self.extract_text_from_image(img, lang)
-            tables = self.detect_tables(text)
-            
-            results['text'] = text
-            results['char_count'] = len(text)
-            results['word_count'] = len(text.split())
-            results['tables'] = tables
-            
-        except Exception as e:
-            st.error(f"Image Processing Error: {str(e)}")
-        
-        return results
-
-def get_download_link(data: str, filename: str, mime_type: str) -> str:
-    """Generate download link for data"""
-    b64 = base64.b64encode(data.encode()).decode()
-    return f'<a href="data:{mime_type};base64,{b64}" download="{filename}">Download {filename}</a>'
 
 def main():
-    # Header
-    st.markdown('<h1 class="main-header">🔍 BrainSAIT OCR</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="sub-header">برين سايت للتعرف الضوئي على النصوص - Professional Document Processing</p>', 
-                unsafe_allow_html=True)
+    # Premium Header
+    st.markdown("""
+    <div class="premium-header">
+        <h1 class="premium-title">⚡ BrainSAIT OCR</h1>
+        <p class="premium-subtitle">AI-Powered Document Intelligence • Premium Edition</p>
+        <div class="premium-badge">🚀 Powered by Tesseract 5.0 + Advanced AI</div>
+    </div>
+    """, unsafe_allow_html=True)
     
-    # Initialize database
-    db_conn = init_database()
-    
-    # Initialize OCR processor
     processor = OCRProcessor()
     
-    # Sidebar configuration
+    # Sidebar
     with st.sidebar:
-        st.header("⚙️ Settings / الإعدادات")
+        st.markdown("### ⚙️ Advanced Settings")
         
-        # Language selection
         languages = {
-            'English + Arabic / العربية + الإنجليزية': 'eng+ara',
-            'English only / الإنجليزية فقط': 'eng',
-            'Arabic only / العربية فقط': 'ara',
-            'French + Arabic / الفرنسية + العربية': 'fra+ara',
-            'Spanish + English / الإسبانية + الإنجليزية': 'spa+eng',
+            '🌍 English + Arabic': 'eng+ara',
+            '🇬🇧 English Only': 'eng',
+            '🇸🇦 Arabic Only': 'ara',
+            '🇫🇷 French + Arabic': 'fra+ara',
+            '🇪🇸 Spanish + English': 'spa+eng',
         }
         
         selected_lang = st.selectbox(
-            "OCR Language / لغة التعرف",
+            "OCR Language",
             options=list(languages.keys()),
             index=0
         )
         lang_code = languages[selected_lang]
         
-        # OCR options
-        enable_ocr = st.checkbox("Enable OCR for scanned PDFs / تفعيل التعرف الضوئي", value=True)
-        extract_tables = st.checkbox("Extract Tables / استخراج الجداول", value=True)
+        enable_ocr = st.checkbox("🔍 Enable OCR for Scanned PDFs", value=True)
+        extract_tables = st.checkbox("📊 AI Table Extraction", value=True)
         
-        # Export format
-        export_format = st.radio(
-            "Export Format / صيغة التصدير",
-            options=['Text (.txt)', 'CSV (.csv)', 'JSON (.json)', 'Markdown (.md)'],
-            index=0
-        )
-        
-        st.divider()
-        
-        # Statistics
-        st.header("📊 Statistics / الإحصائيات")
-        cursor = db_conn.cursor()
-        cursor.execute("SELECT COUNT(*), SUM(character_count) FROM ocr_results WHERE success = 1")
-        total_files, total_chars = cursor.fetchone()
-        
-        st.metric("Total Files Processed / الملفات المعالجة", total_files or 0)
-        st.metric("Total Characters / إجمالي الأحرف", f"{total_chars or 0:,}")
+        st.markdown("---")
+        st.markdown("### 💎 Premium Features")
+        st.markdown("""
+        ✅ Advanced AI table detection  
+        ✅ Professional Excel export  
+        ✅ Multi-format support  
+        ✅ Intelligent text extraction  
+        ✅ Premium dark theme  
+        """)
     
-    # Main content
-    col1, col2 = st.columns([2, 1])
+    # Main Upload Area
+    st.markdown('<div class="premium-card">', unsafe_allow_html=True)
+    
+    col1, col2 = st.columns([3, 1])
     
     with col1:
-        st.header("📤 Upload Document / رفع المستند")
-        
+        st.markdown("### 📤 Upload Your Document")
         uploaded_file = st.file_uploader(
-            "Choose PDF or Image file / اختر ملف PDF أو صورة",
+            "Drop your PDF or image here",
             type=processor.supported_formats,
-            help="Supported formats: PDF, PNG, JPG, JPEG, WEBP, BMP, TIFF"
+            help="Supports: PDF, PNG, JPG, JPEG, WEBP, BMP, TIFF"
         )
     
     with col2:
-        if uploaded_file is not None:
-            st.success(f"✅ File uploaded: {uploaded_file.name}")
-            st.info(f"📦 Size: {uploaded_file.size / 1024:.2f} KB")
-            
-            file_ext = uploaded_file.name.split('.')[-1].lower()
-            st.info(f"📄 Type: {file_ext.upper()}")
+        if uploaded_file:
+            st.success("✅ File Ready")
+            st.metric("Size", f"{uploaded_file.size / 1024:.1f} KB")
+            file_ext = uploaded_file.name.split('.')[-1].upper()
+            st.metric("Type", file_ext)
     
-    # Processing
+    st.markdown('</div>', unsafe_allow_html=True)
+    
     if uploaded_file is not None:
-        if st.button("🚀 Start Processing / بدء المعالجة", type="primary", use_container_width=True):
-            
-            # Read file
+        if st.button("🚀 Start AI Processing", type="primary", use_container_width=True):
             file_bytes = uploaded_file.read()
             file_hash = processor.calculate_file_hash(file_bytes)
             file_ext = uploaded_file.name.split('.')[-1].lower()
             
-            # Check if already processed (cache)
-            cursor = db_conn.cursor()
-            cursor.execute("SELECT * FROM ocr_results WHERE file_hash = ?", (file_hash,))
-            cached_result = cursor.fetchone()
-            
-            if cached_result:
-                st.info("💾 This file was processed before. Using cached results.")
-            
-            # Process file
             start_time = datetime.now()
             
-            with st.spinner('⏳ Processing... Please wait / جارٍ المعالجة... يرجى الانتظار'):
-                # Progress bar
+            with st.spinner('⚡ AI Processing in progress...'):
                 progress_bar = st.progress(0)
                 status_text = st.empty()
                 
                 def update_progress(current, total):
                     progress = current / total
                     progress_bar.progress(progress)
-                    status_text.text(f"Processing page {current}/{total}...")
+                    status_text.markdown(f'<div class="info-box">Processing page {current}/{total}...</div>', unsafe_allow_html=True)
                 
-                # Process based on file type
                 if file_ext == 'pdf':
                     results = processor.extract_from_pdf(
                         file_bytes, 
@@ -360,208 +651,193 @@ def main():
                         progress_callback=update_progress
                     )
                 else:
-                    results = processor.extract_from_image(file_bytes, lang=lang_code)
-                    results['pages'] = [{'page_number': 1, 'text': results['text'], 
-                                        'char_count': results['char_count'],
-                                        'word_count': results['word_count']}]
+                    img = Image.open(io.BytesIO(file_bytes))
+                    text = processor.extract_text_from_image(img, lang_code)
+                    tables = processor.table_detector.detect_table_structure(text)
+                    results = {
+                        'pages': [{'page_number': 1, 'text': text, 'char_count': len(text),
+                                  'word_count': len(text.split()), 'tables': tables, 'table_count': len(tables)}],
+                        'total_text': text,
+                        'tables': tables
+                    }
                 
                 processing_time = (datetime.now() - start_time).total_seconds()
-                
                 progress_bar.empty()
                 status_text.empty()
             
-            # Store results
             st.session_state.current_results = results
             
-            # Save to database
-            try:
-                cursor.execute('''
-                    INSERT OR REPLACE INTO ocr_results 
-                    (filename, file_hash, file_size, page_count, language, 
-                     character_count, word_count, processing_time, success)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (
-                    uploaded_file.name,
-                    file_hash,
-                    uploaded_file.size,
-                    len(results.get('pages', [])),
-                    lang_code,
-                    len(results.get('total_text', results.get('text', ''))),
-                    sum(p['word_count'] for p in results.get('pages', [])),
-                    processing_time,
-                    1
-                ))
-                db_conn.commit()
-            except Exception as e:
-                st.warning(f"Could not save to history: {str(e)}")
+            st.markdown(f'<div class="success-box">✅ Processing complete in {processing_time:.2f} seconds!</div>', unsafe_allow_html=True)
             
-            st.success(f"✅ Processing complete in {processing_time:.2f} seconds!")
-            
-            # Display results
-            st.header("📊 Results / النتائج")
-            
-            # Metrics
+            # Premium Metrics
+            st.markdown("### 📊 Document Insights")
             col1, col2, col3, col4 = st.columns(4)
             
             with col1:
-                st.metric("Pages / الصفحات", len(results.get('pages', [])))
+                st.markdown(f'''
+                <div class="metric-card">
+                    <div class="metric-value">{len(results.get("pages", []))}</div>
+                    <div class="metric-label">Pages</div>
+                </div>
+                ''', unsafe_allow_html=True)
             
             with col2:
-                total_chars = len(results.get('total_text', results.get('text', '')))
-                st.metric("Characters / الأحرف", f"{total_chars:,}")
+                total_chars = len(results.get('total_text', ''))
+                st.markdown(f'''
+                <div class="metric-card">
+                    <div class="metric-value">{total_chars:,}</div>
+                    <div class="metric-label">Characters</div>
+                </div>
+                ''', unsafe_allow_html=True)
             
             with col3:
                 total_words = sum(p['word_count'] for p in results.get('pages', []))
-                st.metric("Words / الكلمات", f"{total_words:,}")
+                st.markdown(f'''
+                <div class="metric-card">
+                    <div class="metric-value">{total_words:,}</div>
+                    <div class="metric-label">Words</div>
+                </div>
+                ''', unsafe_allow_html=True)
             
             with col4:
                 tables_count = len(results.get('tables', []))
-                st.metric("Tables / الجداول", tables_count)
+                st.markdown(f'''
+                <div class="metric-card">
+                    <div class="metric-value">{tables_count}</div>
+                    <div class="metric-label">Tables</div>
+                </div>
+                ''', unsafe_allow_html=True)
             
-            # Tabs for different views
+            # Results Tabs
+            st.markdown("### 🎯 Results")
             tab1, tab2, tab3, tab4 = st.tabs([
-                "📝 Text / النص", 
-                "📊 Tables / الجداول", 
-                "🔍 Search / البحث",
-                "💾 Export / التصدير"
+                "📝 Extracted Text",
+                "📊 AI Tables",
+                "🔍 Smart Search",
+                "💾 Export Options"
             ])
             
             with tab1:
-                if file_ext == 'pdf' and len(results.get('pages', [])) > 1:
-                    page_num = st.selectbox(
-                        "Select Page / اختر الصفحة",
-                        options=range(1, len(results['pages']) + 1),
-                        format_func=lambda x: f"Page {x} / صفحة {x}"
-                    )
-                    
-                    page_data = results['pages'][page_num - 1]
-                    st.text_area(
-                        f"Text from Page {page_num} / النص من الصفحة {page_num}",
-                        value=page_data['text'],
-                        height=400
-                    )
-                else:
-                    st.text_area(
-                        "Extracted Text / النص المستخرج",
-                        value=results.get('text', results.get('total_text', '')),
-                        height=400
-                    )
+                st.markdown('<div class="premium-card">', unsafe_allow_html=True)
+                st.text_area(
+                    "Full Extracted Text",
+                    value=results.get('total_text', ''),
+                    height=400
+                )
+                st.markdown('</div>', unsafe_allow_html=True)
             
             with tab2:
                 if results.get('tables'):
-                    st.subheader(f"Found {len(results['tables'])} tables / تم العثور على {len(results['tables'])} جدول")
+                    st.markdown(f'<div class="success-box">✅ Found {len(results["tables"])} tables with AI detection</div>', unsafe_allow_html=True)
                     
                     for idx, table in enumerate(results['tables'], 1):
-                        st.markdown(f"**Table {idx}** - {table['rows']} rows × {table['columns']} columns")
-                        
-                        # Convert to DataFrame
-                        try:
-                            df = pd.DataFrame(table['data'])
+                        with st.expander(f"📊 Table {idx} - {table['rows']} rows × {table['columns']} columns", expanded=True):
+                            # Create DataFrame
+                            df = pd.DataFrame(table['data'], columns=table['header'])
                             st.dataframe(df, use_container_width=True)
                             
-                            # Download table as CSV
+                            # Download individual table
                             csv = df.to_csv(index=False)
                             st.download_button(
-                                label=f"📥 Download Table {idx} CSV",
+                                label=f"📥 Download Table {idx} as CSV",
                                 data=csv,
-                                file_name=f"table_{idx}_{uploaded_file.name}.csv",
+                                file_name=f"{uploaded_file.name}_table_{idx}.csv",
                                 mime="text/csv"
                             )
-                        except Exception as e:
-                            st.error(f"Could not format table: {str(e)}")
-                        
-                        st.divider()
                 else:
-                    st.info("No tables detected / لم يتم العثور على جداول")
+                    st.markdown('<div class="info-box">ℹ️ No tables detected in this document</div>', unsafe_allow_html=True)
             
             with tab3:
-                search_term = st.text_input("🔍 Search in document / البحث في المستند")
+                st.markdown('<div class="premium-card">', unsafe_allow_html=True)
+                search_term = st.text_input("🔍 Search in document")
                 
                 if search_term:
-                    full_text = results.get('total_text', results.get('text', ''))
                     matches = []
-                    
                     for page in results.get('pages', []):
                         lines = page['text'].split('\n')
-                        for line_num, line in enumerate(lines):
+                        for line in lines:
                             if search_term.lower() in line.lower():
                                 matches.append({
                                     'Page': page['page_number'],
-                                    'Line': line.strip(),
-                                    'Preview': line[:100] + '...' if len(line) > 100 else line
+                                    'Text': line.strip()[:200]
                                 })
                     
                     if matches:
-                        st.success(f"✅ Found {len(matches)} matches / تم العثور على {len(matches)} تطابق")
+                        st.success(f"✅ Found {len(matches)} matches")
                         df_matches = pd.DataFrame(matches)
                         st.dataframe(df_matches, use_container_width=True)
                     else:
-                        st.warning(f"No matches found for '{search_term}' / لا توجد نتائج")
+                        st.warning(f"No matches found for '{search_term}'")
+                st.markdown('</div>', unsafe_allow_html=True)
             
             with tab4:
-                st.subheader("💾 Export Options / خيارات التصدير")
-                
-                full_text = results.get('total_text', results.get('text', ''))
+                st.markdown("### 💾 Professional Export Options")
                 
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    # Text export
+                    st.markdown('<div class="premium-card">', unsafe_allow_html=True)
+                    st.markdown("#### 📄 Text Formats")
+                    
+                    full_text = results.get('total_text', '')
+                    
+                    # TXT Export
                     st.download_button(
-                        label="📄 Download as TXT / تحميل كنص",
+                        label="📄 Download Full Text (.txt)",
                         data=full_text,
                         file_name=f"{uploaded_file.name}_extracted.txt",
                         mime="text/plain",
                         use_container_width=True
                     )
                     
-                    # Markdown export
-                    markdown_text = f"# {uploaded_file.name}\n\n{full_text}"
-                    st.download_button(
-                        label="📝 Download as Markdown / تحميل كـ Markdown",
-                        data=markdown_text,
-                        file_name=f"{uploaded_file.name}_extracted.md",
-                        mime="text/markdown",
-                        use_container_width=True
-                    )
-                
-                with col2:
-                    # JSON export
+                    # JSON Export
                     json_data = json.dumps(results, indent=2, ensure_ascii=False)
                     st.download_button(
-                        label="📊 Download as JSON / تحميل كـ JSON",
+                        label="📊 Download Analysis (.json)",
                         data=json_data,
                         file_name=f"{uploaded_file.name}_analysis.json",
                         mime="application/json",
                         use_container_width=True
                     )
+                    st.markdown('</div>', unsafe_allow_html=True)
+                
+                with col2:
+                    st.markdown('<div class="premium-card">', unsafe_allow_html=True)
+                    st.markdown("#### 📊 Excel Export")
                     
-                    # CSV export (pages summary)
-                    if results.get('pages'):
-                        df_pages = pd.DataFrame([
-                            {
-                                'Page': p['page_number'],
-                                'Characters': p['char_count'],
-                                'Words': p['word_count']
-                            }
-                            for p in results['pages']
-                        ])
-                        csv = df_pages.to_csv(index=False)
+                    if results.get('tables'):
+                        # Generate base filename
+                        base_name = uploaded_file.name.rsplit('.', 1)[0]
+                        excel_filename = f"{base_name}_tables.xlsx"
+                        
+                        excel_data = processor.table_detector.export_to_excel(
+                            results['tables'],
+                            excel_filename
+                        )
+                        
                         st.download_button(
-                            label="📈 Download Summary CSV / تحميل ملخص CSV",
-                            data=csv,
-                            file_name=f"{uploaded_file.name}_summary.csv",
-                            mime="text/csv",
+                            label=f"📊 Download All Tables (.xlsx)",
+                            data=excel_data,
+                            file_name=excel_filename,
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                             use_container_width=True
                         )
+                        
+                        st.success(f"✅ {len(results['tables'])} tables ready for Excel export")
+                        st.info(f"📁 File: {excel_filename}")
+                    else:
+                        st.warning("No tables available for Excel export")
+                    
+                    st.markdown('</div>', unsafe_allow_html=True)
     
-    # Footer
-    st.divider()
+    # Premium Footer
     st.markdown("""
-    <div style='text-align: center; color: #666; padding: 2rem;'>
-        <p><strong>BrainSAIT OCR</strong> - Professional Document Processing</p>
-        <p>Powered by Tesseract OCR | Built with Streamlit</p>
-        <p>© 2026 Dr. Mohammed Al-Fadil | BrainSAIT</p>
+    <div class="premium-footer">
+        <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">
+            <strong>BrainSAIT OCR</strong> • Premium AI Platform<br>
+            Powered by Tesseract 5.0 + Advanced AI • Built with Streamlit<br>
+            © 2026 Dr. Mohammed Al-Fadil | BrainSAIT
+        </p>
     </div>
     """, unsafe_allow_html=True)
 
