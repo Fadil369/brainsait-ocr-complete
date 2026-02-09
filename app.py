@@ -358,6 +358,68 @@ st.markdown("""
     .stMetric .metric-value {
         color: #667eea !important;
     }
+
+    
+    /* SMART CONTRAST - Dark text on light backgrounds */
+    .stButton>button {
+        color: #FFFFFF !important;  /* White text on gradient buttons */
+    }
+    
+    .premium-header, .premium-header * {
+        color: #FFFFFF !important;  /* White text on gradient header */
+    }
+    
+    .success-box, .success-box * {
+        color: #10b981 !important;  /* Green text on success boxes */
+    }
+    
+    .info-box, .info-box * {
+        color: #60a5fa !important;  /* Bright blue on info boxes */
+    }
+    
+    .warning-box, .warning-box * {
+        color: #fbbf24 !important;  /* Bright yellow on warning boxes */
+    }
+    
+    .dataframe thead tr th {
+        color: #FFFFFF !important;  /* White text on table headers */
+    }
+    
+    .dataframe tbody tr td {
+        color: #1a1d35 !important;  /* Dark text on table cells (light bg) */
+    }
+    
+    .stDownloadButton>button {
+        color: #FFFFFF !important;  /* White text on download buttons */
+    }
+    
+    /* Input fields - dark text when focused/filled */
+    .stTextInput input:focus, .stTextArea textarea:focus {
+        color: #1a1d35 !important;
+        background: rgba(255, 255, 255, 0.9) !important;
+    }
+    
+    /* Select boxes with light dropdown */
+    .stSelectbox div[data-baseweb="select"] > div {
+        color: #FFFFFF !important;
+    }
+    
+    /* Expander headers */
+    .streamlit-expanderHeader {
+        color: #FFFFFF !important;
+    }
+    
+    /* Metric cards - keep gradient text visible */
+    .metric-value {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
+    }
+    
+    .metric-label {
+        color: rgba(255, 255, 255, 0.9) !important;
+    }
+
 </style>
 """, unsafe_allow_html=True)
 
