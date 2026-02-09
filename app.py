@@ -149,7 +149,7 @@ st.markdown("""
     
     .metric-label {
         font-size: 0.9rem;
-        color: rgba(255, 255, 255, 0.7);
+        color: rgba(255, 255, 255, 0.9);
         text-transform: uppercase;
         letter-spacing: 1px;
         margin-top: 0.5rem;
@@ -198,7 +198,7 @@ st.markdown("""
     .stTabs [data-baseweb="tab"] {
         background: transparent;
         border-radius: 8px;
-        color: rgba(255, 255, 255, 0.7);
+        color: rgba(255, 255, 255, 0.9);
         font-weight: 600;
         transition: all 0.3s ease;
     }
@@ -330,6 +330,33 @@ st.markdown("""
     
     ::-webkit-scrollbar-thumb:hover {
         background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    }
+
+    
+    /* BRIGHT TEXT FIXES */
+    .stApp, .stApp p, .stApp span, .stApp div, .stApp label, .stMarkdown {
+        color: #FFFFFF !important;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+        color: #FFFFFF !important;
+    }
+    
+    .stTextInput input, .stTextArea textarea, .stSelectbox select {
+        color: #FFFFFF !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    .stTextInput label, .stSelectbox label, .stCheckbox label {
+        color: #FFFFFF !important;
+    }
+    
+    .stMetric label {
+        color: #FFFFFF !important;
+    }
+    
+    .stMetric .metric-value {
+        color: #667eea !important;
     }
 </style>
 """, unsafe_allow_html=True)
