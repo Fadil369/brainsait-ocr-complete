@@ -420,6 +420,76 @@ st.markdown("""
         color: rgba(255, 255, 255, 0.9) !important;
     }
 
+
+    
+    /* SIDEBAR - All text bright white */
+    [data-testid="stSidebar"] * {
+        color: #FFFFFF !important;
+    }
+    
+    [data-testid="stSidebar"] h1, 
+    [data-testid="stSidebar"] h2, 
+    [data-testid="stSidebar"] h3,
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] span,
+    [data-testid="stSidebar"] div {
+        color: #FFFFFF !important;
+    }
+    
+    /* Sidebar select boxes */
+    [data-testid="stSidebar"] .stSelectbox label,
+    [data-testid="stSidebar"] .stSelectbox div,
+    [data-testid="stSidebar"] .stSelectbox span {
+        color: #FFFFFF !important;
+    }
+    
+    /* Sidebar checkboxes */
+    [data-testid="stSidebar"] .stCheckbox label,
+    [data-testid="stSidebar"] .stCheckbox span {
+        color: #FFFFFF !important;
+    }
+    
+    /* FILE UPLOADER - All text bright white */
+    .stFileUploader * {
+        color: #FFFFFF !important;
+    }
+    
+    .stFileUploader label,
+    .stFileUploader span,
+    .stFileUploader p,
+    .stFileUploader div,
+    .stFileUploader small {
+        color: #FFFFFF !important;
+    }
+    
+    /* File uploader drag area */
+    [data-testid="stFileUploadDropzone"] *,
+    [data-testid="stFileUploadDropzone"] label,
+    [data-testid="stFileUploadDropzone"] span {
+        color: #FFFFFF !important;
+    }
+    
+    /* Upload instructions */
+    .uploadedFileName {
+        color: #FFFFFF !important;
+    }
+    
+    /* Main content headings */
+    .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {
+        color: #FFFFFF !important;
+    }
+    
+    /* Form labels */
+    label {
+        color: #FFFFFF !important;
+    }
+    
+    /* Small text / help text */
+    small, .stApp small {
+        color: rgba(255, 255, 255, 0.8) !important;
+    }
+
 </style>
 """, unsafe_allow_html=True)
 
